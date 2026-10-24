@@ -1,14 +1,14 @@
 import React from 'react';
 import type { ToolDefinition } from '../types';
-import { 
-  Layers, 
-  Scissors, 
-  Minimize2, 
-  Image as ImageIcon, 
-  RotateCw, 
-  FileImage, 
-  Eye, 
-  ArrowRight 
+import {
+  Layers,
+  Scissors,
+  Minimize2,
+  Image as ImageIcon,
+  RotateCw,
+  FileImage,
+  Eye,
+  ArrowRight
 } from 'lucide-react';
 
 interface ToolGridProps {

@@ -11,18 +11,19 @@
   --bg-card-hover: rgba(27, 39, 68, 0.85);
   --bg-glass: rgba(13, 19, 34, 0.8);
   --bg-input: rgba(10, 15, 26, 0.8);
-  
+
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-hover: rgba(99, 102, 241, 0.4);
   --border-glow: rgba(99, 102, 241, 0.25);
-  
+
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
   --text-muted: #64748b;
   --text-inverse: #0f172a;
 
   /* Accents */
-  --accent-primary: #6366f1; /* Indigo */
+  --accent-primary: #6366f1;
+  /* Indigo */
   --accent-primary-hover: #4f46e5;
   --accent-cyan: #06b6d4;
   --accent-violet: #8b5cf6;
@@ -86,7 +87,9 @@
    Base & Resets
    ========================================================================== */
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -130,7 +133,9 @@ button {
   background: none;
 }
 
-input, select, textarea {
+input,
+select,
+textarea {
   font-family: inherit;
   color: inherit;
 }
@@ -140,13 +145,16 @@ input, select, textarea {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--bg-app);
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--border-subtle);
   border-radius: var(--radius-full);
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-primary);
 }
@@ -257,9 +265,20 @@ input, select, textarea {
 }
 
 @keyframes pulse {
-  0% { opacity: 0.6; transform: scale(0.95); }
-  50% { opacity: 1; transform: scale(1.15); }
-  100% { opacity: 0.6; transform: scale(0.95); }
+  0% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+
+  100% {
+    opacity: 0.6;
+    transform: scale(0.95);
+  }
 }
 
 /* Quick Search Input */
@@ -640,7 +659,8 @@ input, select, textarea {
   overflow: hidden;
 }
 
-.dropzone:hover, .dropzone.drag-active {
+.dropzone:hover,
+.dropzone.drag-active {
   border-color: var(--accent-primary);
   background: rgba(99, 102, 241, 0.05);
   box-shadow: 0 0 25px rgba(99, 102, 241, 0.15);
@@ -1015,8 +1035,15 @@ input, select, textarea {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .result-icon-circle {
@@ -1210,8 +1237,15 @@ input, select, textarea {
 }
 
 @keyframes toastIn {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ==========================================================================
@@ -1222,19 +1256,24 @@ input, select, textarea {
   .hero-title {
     font-size: 2rem;
   }
+
   .header-inner {
     flex-wrap: wrap;
   }
+
   .search-wrapper {
     width: 100%;
     order: 3;
   }
+
   .search-input:focus {
     width: 100%;
   }
+
   .tools-grid {
     grid-template-columns: 1fr;
   }
+
   .workspace-meta {
     flex-direction: column;
     text-align: center;
