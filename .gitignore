@@ -7,9 +7,15 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-
+# Environment variables
 .env
-instagram_mockups/*
+.env.*
+!.env.example
+
+# Local assets & mockups
+instagram_mockups/
+
+# Dependencies & build
 node_modules
 dist
 dist-ssr
