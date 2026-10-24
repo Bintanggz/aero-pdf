@@ -10,7 +10,7 @@
 [![Vite](https://img.shields.io/badge/Vite-8.x-646cff?logo=vite&logoColor=white)](https://vitejs.dev/)
 [![Privacy: 100% Client-Side](https://img.shields.io/badge/Privacy-100%25%20Client--Side-10b981.svg)](#-mengapa-aeropdf)
 
-[🚀 Jelajahi Fitur](#-fitur-utama) • [💻 Panduan Instalasi](#-memulai-secara-lokal) • [🤝 Panduan Kontribusi](#-berkontribusi) • [🛣️ Roadmap](#-roadmap)
+[🚀 Jelajahi Fitur](#-fitur-utama) • [💻 Panduan Instalasi](#-memulai-secara-lokal) • [🤝 Panduan Kontribusi](#-berkontribusi) • [🛣️ Roadmap](#-roadmap) • [👥 Kontributor](#-kontributor)
 
 ---
 
@@ -134,6 +134,17 @@ Silakan baca **[CONTRIBUTING.md](CONTRIBUTING.md)** untuk panduan alur kerja Git
 
 Ingin menggarap salah satu fitur di atas? Buka issue atau langsung ajukan Pull Request!
 
+
+---
+
+## 👥 Kontributor
+
+Terima kasih kepada semua orang yang telah membantu mengembangkan dan menyempurnakan AeroPDF!
+
+<a href="https://github.com/Bintanggz/aero-pdf/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Bintanggz/aero-pdf" alt="Kontributor AeroPDF" />
+</a>
+
 ---
 
 ## 📜 Lisensi
@@ -141,3 +152,4 @@ Ingin menggarap salah satu fitur di atas? Buka issue atau langsung ajukan Pull R
 Proyek ini dilisensikan di bawah **[MIT License](LICENSE)**. Anda bebas menggunakan, memodifikasi, dan mendistribusikan kode ini untuk tujuan pribadi maupun komersial.
 
 Dibuat dengan ❤️ oleh [Bintang](https://github.com/Bintanggz).
+
