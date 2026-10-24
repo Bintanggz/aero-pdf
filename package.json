@@ -1,7 +1,23 @@
 {
-  "name": "pdf-toolkit",
-  "private": true,
-  "version": "0.0.0",
+  "name": "aero-pdf",
+  "version": "1.0.0",
+  "description": "Fast, modern, and 100% private client-side PDF toolkit built with React & Vite.",
+  "license": "MIT",
+  "author": "Bintang (https://github.com/Bintanggz)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Bintanggz/aero-pdf.git"
+  },
+  "keywords": [
+    "pdf",
+    "pdf-tools",
+    "merge-pdf",
+    "split-pdf",
+    "compress-pdf",
+    "client-side",
+    "react",
+    "vite"
+  ],
   "type": "module",
   "scripts": {
     "dev": "vite",
