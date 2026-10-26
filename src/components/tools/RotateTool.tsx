@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { RotateCw, Loader2 } from 'lucide-react';
+import { RotateCw, Loader2, CheckSquare, Square } from 'lucide-react';
 import { DropZone } from '../DropZone';
 import { ResultCard } from '../ResultCard';
 import type { UploadedFileItem, RotateOptions, ProcessResult, ProcessProgress } from '../../types';
@@ -16,6 +16,7 @@ export const RotateTool: React.FC<RotateToolProps> = ({ onPreviewPdf, onError })
   const [options, setOptions] = useState<RotateOptions>({
     angle: 90,
     applyTo: 'all',
+    selectedPages: [],
   });
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState<ProcessProgress | null>(null);
@@ -34,10 +35,34 @@ export const RotateTool: React.FC<RotateToolProps> = ({ onPreviewPdf, onError })
   }, []);
 
   const currentFile = files[0];
+  const totalPages = currentFile?.pageCount || 1;
+
+  const togglePageSelection = (pageNum: number) => {
+    const currentList = options.selectedPages || [];
+    const exists = currentList.includes(pageNum);
+    const updated = exists
+      ? currentList.filter((p) => p !== pageNum)
+      : [...currentList, pageNum].sort((a, b) => a - b);
+    setOptions({ ...options, selectedPages: updated });
+  };
+
+  const selectAllPages = () => {
+    const all = Array.from({ length: totalPages }, (_, i) => i + 1);
+    setOptions({ ...options, selectedPages: all });
+  };
+
+  const deselectAllPages = () => {
+    setOptions({ ...options, selectedPages: [] });
+  };
 
   const handleExecute = async () => {
     if (!currentFile) {
       onError('Silakan pilih file PDF yang ingin diputar.');
+      return;
+    }
+
+    if (options.applyTo === 'selected' && (!options.selectedPages || options.selectedPages.length === 0)) {
+      onError('Silakan pilih minimal 1 halaman yang ingin diputar.');
       return;
     }
 
@@ -63,6 +88,11 @@ export const RotateTool: React.FC<RotateToolProps> = ({ onPreviewPdf, onError })
     setFiles([]);
     setResult(null);
     setProgress(null);
+    setOptions({
+      angle: 90,
+      applyTo: 'all',
+      selectedPages: [],
+    });
   };
 
   return (
@@ -124,16 +154,70 @@ export const RotateTool: React.FC<RotateToolProps> = ({ onPreviewPdf, onError })
                     className={`radio-pill ${options.applyTo === 'odd' ? 'active' : ''}`}
                     onClick={() => setOptions({ ...options, applyTo: 'odd' })}
                   >
-                    Hanya Halaman Ganjil (1, 3, 5...)
+                    Halaman Ganjil (1, 3, 5...)
                   </button>
                   <button
                     className={`radio-pill ${options.applyTo === 'even' ? 'active' : ''}`}
                     onClick={() => setOptions({ ...options, applyTo: 'even' })}
                   >
-                    Hanya Halaman Genap (2, 4, 6...)
+                    Halaman Genap (2, 4, 6...)
+                  </button>
+                  <button
+                    className={`radio-pill ${options.applyTo === 'selected' ? 'active' : ''}`}
+                    onClick={() => setOptions({ ...options, applyTo: 'selected' })}
+                  >
+                    Pilih Halaman Tertentu ({options.selectedPages?.length || 0} dipilih)
                   </button>
                 </div>
               </div>
+
+              {/* Interactive Page Selector when applyTo === 'selected' */}
+              {options.applyTo === 'selected' && (
+                <div className="options-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <label className="options-label" style={{ marginBottom: 0 }}>
+                      Klik Halaman yang Ingin Diputar (Total: {totalPages} Halaman):
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="radio-pill" onClick={selectAllPages} style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
+                        Pilih Semua
+                      </button>
+                      <button className="radio-pill" onClick={deselectAllPages} style={{ padding: '4px 10px', fontSize: '0.75rem' }}>
+                        Hapus Pilihan
+                      </button>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', maxHeight: '200px', overflowY: 'auto', padding: '8px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }}>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => {
+                      const isSelected = options.selectedPages?.includes(p) || false;
+                      return (
+                        <button
+                          key={p}
+                          type="button"
+                          onClick={() => togglePageSelection(p)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            background: isSelected ? 'var(--accent-primary)' : 'var(--bg-input)',
+                            color: isSelected ? '#ffffff' : 'var(--text-secondary)',
+                            border: `1px solid ${isSelected ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          {isSelected ? <CheckSquare size={14} /> : <Square size={14} />}
+                          <span>Hal {p}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

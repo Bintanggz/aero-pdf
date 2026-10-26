@@ -12,6 +12,10 @@ if (typeof window !== 'undefined') {
  * Extracts page count and renders a thumbnail of page 1 for a PDF file
  */
 export async function getPdfInfoAndThumbnail(file: File): Promise<{ pageCount: number; thumbnailUrl: string }> {
+  let pdf: any = null;
+  let page: any = null;
+  const canvas = document.createElement('canvas');
+
   try {
     const arrayBuffer = await file.arrayBuffer();
     const loadingTask = pdfjsLib.getDocument({
@@ -20,11 +24,11 @@ export async function getPdfInfoAndThumbnail(file: File): Promise<{ pageCount: n
       useSystemFonts: true,
     });
 
-    const pdf = await loadingTask.promise;
+    pdf = await loadingTask.promise;
     const pageCount = pdf.numPages;
 
     // Render page 1 thumbnail
-    const page = await pdf.getPage(1);
+    page = await pdf.getPage(1);
     const viewport = page.getViewport({ scale: 1 });
     
     // Scale down to max width 220px for thumbnail
@@ -32,7 +36,6 @@ export async function getPdfInfoAndThumbnail(file: File): Promise<{ pageCount: n
     const scale = targetWidth / viewport.width;
     const scaledViewport = page.getViewport({ scale });
 
-    const canvas = document.createElement('canvas');
     canvas.width = scaledViewport.width;
     canvas.height = scaledViewport.height;
 
@@ -54,6 +57,23 @@ export async function getPdfInfoAndThumbnail(file: File): Promise<{ pageCount: n
   } catch (err) {
     console.warn(`Could not generate thumbnail for ${file.name}:`, err);
     return { pageCount: 1, thumbnailUrl: '' };
+  } finally {
+    if (page) {
+      try {
+        page.cleanup();
+      } catch {
+        // ignore
+      }
+    }
+    canvas.width = 0;
+    canvas.height = 0;
+    if (pdf) {
+      try {
+        await pdf.cleanup();
+      } catch {
+        // ignore
+      }
+    }
   }
 }
 
@@ -80,23 +100,43 @@ export async function renderPdfPage(
   canvas: HTMLCanvasElement,
   targetWidth = 600
 ): Promise<void> {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
-  const page = await pdf.getPage(pageNumber);
+  let pdf: any = null;
+  let page: any = null;
 
-  const originalViewport = page.getViewport({ scale: 1 });
-  const scale = targetWidth / originalViewport.width;
-  const viewport = page.getViewport({ scale });
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    pdf = await pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
+    page = await pdf.getPage(pageNumber);
 
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
+    const originalViewport = page.getViewport({ scale: 1 });
+    const scale = targetWidth / originalViewport.width;
+    const viewport = page.getViewport({ scale });
 
-  const ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Canvas context unavailable');
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
 
-  await (page.render({
-    canvasContext: ctx,
-    viewport,
-    canvas,
-  } as any)).promise;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Canvas context unavailable');
+
+    await (page.render({
+      canvasContext: ctx,
+      viewport,
+      canvas,
+    } as any)).promise;
+  } finally {
+    if (page) {
+      try {
+        page.cleanup();
+      } catch {
+        // ignore
+      }
+    }
+    if (pdf) {
+      try {
+        await pdf.cleanup();
+      } catch {
+        // ignore
+      }
+    }
+  }
 }

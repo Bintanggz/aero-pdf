@@ -15,6 +15,7 @@ export const ViewerTool: React.FC<ViewerToolProps> = ({ onError }) => {
   const [zoomScale, setZoomScale] = useState(1.2);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const renderTaskRef = useRef<any>(null);
 
   const currentFile = files[0];
 
@@ -22,18 +23,25 @@ export const ViewerTool: React.FC<ViewerToolProps> = ({ onError }) => {
   useEffect(() => {
     if (!currentFile) return;
     let isCancelled = false;
+    let loadedPdf: any = null;
+    let loadingTask: any = null;
 
     currentFile.file
       .arrayBuffer()
       .then((buf) => {
         if (isCancelled) return null;
-        return pdfjsLib.getDocument({ data: new Uint8Array(buf) }).promise;
+        loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(buf) });
+        return loadingTask.promise;
       })
       .then((pdf) => {
         if (pdf && !isCancelled) {
+          loadedPdf = pdf;
           setPdfDoc(pdf);
           setTotalPages(pdf.numPages);
           setCurrentPage(1);
+        } else if (pdf) {
+          pdf.cleanup();
+          loadingTask?.destroy();
         }
       })
       .catch((e: any) => {
@@ -49,33 +57,107 @@ export const ViewerTool: React.FC<ViewerToolProps> = ({ onError }) => {
 
     return () => {
       isCancelled = true;
+      if (loadingTask) {
+        try {
+          loadingTask.destroy();
+        } catch {
+          // ignore
+        }
+      }
+      if (loadedPdf) {
+        try {
+          loadedPdf.cleanup();
+        } catch {
+          // ignore
+        }
+      }
     };
   }, [currentFile, onError]);
 
-  // Render current page to canvas
+  // Render current page to canvas safely
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current) return;
+    let isCancelled = false;
+    let pageObj: any = null;
+
+    // Cancel any previous render task before starting a new one
+    if (renderTaskRef.current) {
+      try {
+        renderTaskRef.current.cancel();
+      } catch {
+        // ignore
+      }
+      renderTaskRef.current = null;
+    }
 
     pdfDoc.getPage(currentPage).then((page: any) => {
+      if (isCancelled) return;
+      pageObj = page;
       const viewport = page.getViewport({ scale: zoomScale });
-      const canvas = canvasRef.current!;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
       canvas.width = viewport.width;
       canvas.height = viewport.height;
 
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      page.render({
+      const renderTask = page.render({
         canvasContext: ctx,
         viewport,
       });
+      renderTaskRef.current = renderTask;
+
+      renderTask.promise
+        .catch((err: any) => {
+          if (err?.name !== 'RenderingCancelledException') {
+            console.error('Error rendering viewer page:', err);
+          }
+        })
+        .finally(() => {
+          if (renderTaskRef.current === renderTask) {
+            renderTaskRef.current = null;
+          }
+        });
     });
+
+    return () => {
+      isCancelled = true;
+      if (renderTaskRef.current) {
+        try {
+          renderTaskRef.current.cancel();
+        } catch {
+          // ignore
+        }
+        renderTaskRef.current = null;
+      }
+      if (pageObj) {
+        try {
+          pageObj.cleanup();
+        } catch {
+          // ignore
+        }
+      }
+    };
   }, [pdfDoc, currentPage, zoomScale]);
 
   const handlePrev = () => setCurrentPage((p) => Math.max(1, p - 1));
   const handleNext = () => setCurrentPage((p) => Math.min(totalPages, p + 1));
   const handleZoomIn = () => setZoomScale((s) => Math.min(2.5, s + 0.2));
   const handleZoomOut = () => setZoomScale((s) => Math.max(0.6, s - 0.2));
+
+  const handleCloseDocument = () => {
+    if (pdfDoc) {
+      try {
+        pdfDoc.cleanup();
+      } catch {
+        // ignore
+      }
+    }
+    setPdfDoc(null);
+    setFiles([]);
+  };
 
   return (
     <div className="workspace-container">
@@ -140,7 +222,7 @@ export const ViewerTool: React.FC<ViewerToolProps> = ({ onError }) => {
 
               <button
                 className="btn-secondary"
-                onClick={() => setFiles([])}
+                onClick={handleCloseDocument}
                 style={{ padding: '6px 14px', fontSize: '0.85rem' }}
               >
                 Tutup Dokumen

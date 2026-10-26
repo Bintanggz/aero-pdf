@@ -13,18 +13,24 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({ url, onClose }) 
   const [zoomScale, setZoomScale] = useState(1.1);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const renderTaskRef = useRef<any>(null);
 
   useEffect(() => {
     if (!url) return;
     let isCancelled = false;
+    let loadedPdf: any = null;
 
     const loadingTask = pdfjsLib.getDocument({ url });
     loadingTask.promise
       .then((pdf) => {
         if (!isCancelled) {
+          loadedPdf = pdf;
           setPdfDoc(pdf);
           setTotalPages(pdf.numPages);
           setCurrentPage(1);
+        } else {
+          pdf.cleanup();
+          loadingTask.destroy();
         }
       })
       .catch((err) => {
@@ -35,27 +41,86 @@ export const PdfViewerModal: React.FC<PdfViewerModalProps> = ({ url, onClose }) 
 
     return () => {
       isCancelled = true;
-      loadingTask.destroy();
+      try {
+        loadingTask.destroy();
+      } catch {
+        // ignore
+      }
+      if (loadedPdf) {
+        try {
+          loadedPdf.cleanup();
+        } catch {
+          // ignore
+        }
+      }
     };
   }, [url]);
 
   useEffect(() => {
     if (!pdfDoc || !canvasRef.current) return;
+    let isCancelled = false;
+    let pageObj: any = null;
+
+    // Cancel any ongoing render task before starting a new one
+    if (renderTaskRef.current) {
+      try {
+        renderTaskRef.current.cancel();
+      } catch {
+        // ignore
+      }
+      renderTaskRef.current = null;
+    }
 
     pdfDoc.getPage(currentPage).then((page: any) => {
+      if (isCancelled) return;
+      pageObj = page;
       const viewport = page.getViewport({ scale: zoomScale });
-      const canvas = canvasRef.current!;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+
       canvas.width = viewport.width;
       canvas.height = viewport.height;
 
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      page.render({
+      const renderTask = page.render({
         canvasContext: ctx,
         viewport,
       });
+      renderTaskRef.current = renderTask;
+
+      renderTask.promise
+        .catch((err: any) => {
+          if (err?.name !== 'RenderingCancelledException') {
+            console.error('Error rendering preview page:', err);
+          }
+        })
+        .finally(() => {
+          if (renderTaskRef.current === renderTask) {
+            renderTaskRef.current = null;
+          }
+        });
     });
+
+    return () => {
+      isCancelled = true;
+      if (renderTaskRef.current) {
+        try {
+          renderTaskRef.current.cancel();
+        } catch {
+          // ignore
+        }
+        renderTaskRef.current = null;
+      }
+      if (pageObj) {
+        try {
+          pageObj.cleanup();
+        } catch {
+          // ignore
+        }
+      }
+    };
   }, [pdfDoc, currentPage, zoomScale]);
 
   if (!url) return null;

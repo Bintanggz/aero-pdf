@@ -5,7 +5,7 @@ import { getPdfInfoAndThumbnail, getImageThumbnail } from '../services/thumbnail
 
 interface DropZoneProps {
   files: UploadedFileItem[];
-  onFilesChange: (files: UploadedFileItem[]) => void;
+  onFilesChange: React.Dispatch<React.SetStateAction<UploadedFileItem[]>>;
   acceptedTypes: string[];
   multiple: boolean;
   title?: string;
@@ -67,15 +67,14 @@ export const DropZone: React.FC<DropZoneProps> = ({
       newItems.push(item);
     }
 
-    const updatedList = multiple ? [...files, ...newItems] : newItems;
-    onFilesChange(updatedList);
+    onFilesChange((prev) => (multiple ? [...prev, ...newItems] : newItems));
 
-    // Asynchronously generate thumbnails & page counts
+    // Asynchronously generate thumbnails & page counts safely without stale closures
     for (const item of newItems) {
       if (item.file.name.toLowerCase().endsWith('.pdf')) {
         getPdfInfoAndThumbnail(item.file).then(({ pageCount, thumbnailUrl }) => {
-          onFilesChange(
-            updatedList.map((f) =>
+          onFilesChange((prev) =>
+            prev.map((f) =>
               f.id === item.id
                 ? { ...f, pageCount, thumbnailUrl, status: 'ready' }
                 : f
@@ -85,8 +84,8 @@ export const DropZone: React.FC<DropZoneProps> = ({
       } else {
         // Image file
         getImageThumbnail(item.file).then((thumbnailUrl) => {
-          onFilesChange(
-            updatedList.map((f) =>
+          onFilesChange((prev) =>
+            prev.map((f) =>
               f.id === item.id
                 ? { ...f, thumbnailUrl, pageCount: 1, status: 'ready' }
                 : f
@@ -122,28 +121,35 @@ export const DropZone: React.FC<DropZoneProps> = ({
     if (e.target.files) {
       processNewFiles(e.target.files);
     }
+    // Reset input value so selecting the exact same file again will trigger onChange
+    e.target.value = '';
   };
 
   const handleRemoveFile = (id: string) => {
-    onFilesChange(files.filter((f) => f.id !== id));
+    onFilesChange((prev) => prev.filter((f) => f.id !== id));
   };
 
   const handleMoveUp = (index: number) => {
     if (index === 0) return;
-    const newArr = [...files];
-    const temp = newArr[index];
-    newArr[index] = newArr[index - 1];
-    newArr[index - 1] = temp;
-    onFilesChange(newArr);
+    onFilesChange((prev) => {
+      if (index <= 0 || index >= prev.length) return prev;
+      const newArr = [...prev];
+      const temp = newArr[index];
+      newArr[index] = newArr[index - 1];
+      newArr[index - 1] = temp;
+      return newArr;
+    });
   };
 
   const handleMoveDown = (index: number) => {
-    if (index === files.length - 1) return;
-    const newArr = [...files];
-    const temp = newArr[index];
-    newArr[index] = newArr[index + 1];
-    newArr[index + 1] = temp;
-    onFilesChange(newArr);
+    onFilesChange((prev) => {
+      if (index < 0 || index >= prev.length - 1) return prev;
+      const newArr = [...prev];
+      const temp = newArr[index];
+      newArr[index] = newArr[index + 1];
+      newArr[index + 1] = temp;
+      return newArr;
+    });
   };
 
   return (
